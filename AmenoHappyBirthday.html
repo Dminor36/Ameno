@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 叫瀏覽器不要把這個檔案存起來重複使用，改版後才不會拿到舊的 -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>絡綺生日快樂！！</title>
+<style>
+  /* Chrome 離線恐龍遊戲的配色：白底、單一深灰、無圓角、無陰影 */
+  :root{--ink:#535353;--ink-soft:#a3a3a3;--line:#d8d8d8;--paper:#ffffff;--red:#8f3d2b;--green:#4a7a4a}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Courier New",
+      "Noto Sans Mono CJK TC","PingFang TC","Microsoft JhengHei",monospace;
+    color:var(--ink);background:var(--paper);
+    padding:18px;-webkit-font-smoothing:antialiased;
+  }
+  #wrap{display:flex;gap:20px;align-items:flex-start;max-width:1360px;margin:0 auto}
+  #panel{width:330px;flex:0 0 330px;position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto;padding-right:4px}
+  #stage{flex:1;min-width:0}
+  body.baked #panel{display:none}
+  body.baked #wrap{max-width:900px}
+  h1{font-size:22px;margin:0 0 2px;letter-spacing:.18em}
+  h1 small{display:block;font-size:10px;letter-spacing:.4em;color:var(--ink-soft);margin-top:6px}
+  .sheet{background:var(--paper);border:2px solid var(--ink);padding:18px 20px;margin-top:14px}
+  .card{border:2px solid var(--line);padding:12px 14px;margin-bottom:12px}
+  .card h3{margin:0 0 10px;font-size:12px;letter-spacing:.24em;color:var(--ink);
+    border-bottom:2px solid var(--line);padding-bottom:7px}
+  label{display:block;font-size:12.5px;margin:12px 0 5px;letter-spacing:.06em}
+  label:first-child{margin-top:0}
+  .hint{color:var(--ink-soft);font-size:11px}
+  textarea,input[type=text]{width:100%;font-family:inherit;font-size:14px;color:var(--ink);background:var(--paper);
+    border:2px solid var(--line);padding:7px 8px;outline:none;resize:vertical;line-height:1.6;border-radius:0}
+  textarea:focus,input[type=text]:focus{border-color:var(--ink)}
+  .ctrl{margin:10px 0 3px}
+  .ctrl .top{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;letter-spacing:.04em}
+  .ctrl .val{font-size:12px;color:var(--ink);font-weight:700}
+  .ctrl .note{font-size:11px;color:var(--ink-soft);line-height:1.55;margin-top:2px}
+  input[type=range]{width:100%;margin:4px 0 0;accent-color:#535353;height:18px}
+  .chk{display:flex;align-items:center;gap:8px;font-size:12.5px;margin:10px 0}
+  .chk input{width:15px;height:15px;accent-color:#535353}
+  button{font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer;background:var(--paper);
+    border:2px solid var(--ink);border-radius:0;padding:8px 18px;letter-spacing:.14em;
+    transition:background .1s,color .1s}
+  button:hover{background:var(--ink);color:var(--paper)}
+  button:active{transform:translateY(1px)}
+  button.ghost{border-color:var(--line);font-size:12px;padding:7px 14px;color:var(--ink-soft)}
+  button.ghost:hover{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+  button.primary{background:var(--ink);color:var(--paper)}
+  button.primary:hover{background:var(--paper);color:var(--ink)}
+  button.wide{display:block;width:100%;margin-top:8px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .chip{font-size:11px;padding:5px 9px;cursor:pointer;color:var(--ink-soft);border:2px solid var(--line);
+    border-radius:0;background:transparent;letter-spacing:.04em}
+  .chip:hover{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+  #readout{font-size:11.5px;line-height:1.95;color:var(--ink-soft)}
+  #readout b{color:var(--ink)}
+  #warn{font-size:12px;color:var(--red);line-height:1.6;margin-top:8px;display:none;
+    border-left:3px solid var(--red);padding-left:8px}
+  #warn.on{display:block}
+  #hud{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:8px;flex-wrap:wrap}
+  #collected{font-size:20px;letter-spacing:.25em;min-height:30px;line-height:1.4;flex:1;padding-bottom:4px;word-break:break-all}
+  #collected .blank{color:var(--line)}
+  #meta{font-size:12px;color:var(--ink-soft);white-space:nowrap;letter-spacing:.08em}
+  canvas{display:block;width:100%;height:auto;background:var(--paper);
+    border-bottom:2px solid var(--line);touch-action:manipulation}
+  .tip{font-size:12px;color:var(--ink-soft);letter-spacing:.06em;line-height:1.7}
+  section{display:none}
+  section.on{display:block}
+  .question-box{font-size:clamp(18px,3vw,26px);line-height:1.9;letter-spacing:.14em;margin:8px 0 4px}
+  .answer-big{font-size:clamp(24px,4.5vw,38px);letter-spacing:.14em;color:var(--ink);margin:10px 0;
+    line-height:1.5;word-break:break-all;font-weight:700}
+  .verdict{font-size:12.5px;margin-top:12px;min-height:22px;letter-spacing:.06em}
+  .verdict.bad{color:var(--red)}
+  .verdict.good{color:var(--green)}
+  .stamp{display:inline-block;border:2px solid var(--ink);color:var(--ink);padding:5px 14px;font-size:11px;
+    letter-spacing:.34em;border-radius:0;margin-bottom:10px}
+  .divider{border:none;border-top:2px solid var(--line);margin:16px 0}
+  #res-note{display:none;white-space:pre-wrap;word-break:break-word;font-size:clamp(15px,2.4vw,19px);
+    line-height:2;letter-spacing:.1em;margin:16px 0 4px;padding:14px 16px;
+    background:var(--paper);border:2px dashed var(--line);border-radius:0}
+  #title-big{font-size:clamp(26px,5.5vw,44px);letter-spacing:.28em;margin:16px 0 8px}
+  .center{text-align:center;padding:26px 10px}
+  @media(max-width:900px){#wrap{flex-direction:column}#panel{position:static;width:100%;flex:none;max-height:none}}
+</style>
+</head>
+<body class="baked">
+<div id="wrap">
+
+  <!-- ================= 調參面板（匯出時會整塊移除） ================= -->
+  
+
+  <!-- ================= 遊戲舞台（匯出時原樣保留） ================= -->
+  <main id="stage">
+
+    <section id="scr-title" class="on">
+      <div class="sheet center">
+        <div id="title-big">文字闖關</div>
+        <div class="tip" id="title-sub">閃過所有文字，看看它們拼成什麼</div>
+        <div class="row" style="justify-content:center">
+          <button class="primary" id="btn-start">開始遊戲</button>
+        </div>
+        <div class="tip" style="margin-top:14px" id="title-ctrl">空白鍵 / ↑ / 點擊畫面＝跳躍・按住跳更高</div>
+      </div>
+    </section>
+
+    <section id="scr-game">
+      <div class="sheet" style="padding:16px 18px">
+        <div id="hud">
+          <div id="collected"></div>
+          <div id="meta"></div>
+        </div>
+        <canvas id="cv"></canvas>
+        <!-- 平常什麼都不放，撞到之後才冒出「直接作答」 -->
+        <div class="row" id="death-row" style="margin-top:12px;justify-content:center;display:none">
+          <button class="primary" id="btn-answer">直接作答</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="scr-quiz">
+      <div class="sheet">
+        <div class="stamp">S T A G E   C L E A R</div>
+        <div class="tip" id="quiz-lead">你一路閃過的文字，組合起來是：</div>
+        <div class="question-box" id="quiz-question"></div>
+        <hr class="divider">
+        <label>你的答案</label>
+        <input id="in-guess" type="text" placeholder="在這裡作答……" autocomplete="off">
+        <div class="verdict" id="verdict"></div>
+        <div class="row">
+          <button class="primary" id="btn-submit">送出答案</button>
+          <button class="ghost" id="btn-replay">再跑一次關卡</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="scr-result">
+      <div class="sheet">
+        <div class="stamp">C L E A R</div>
+        <div class="tip">問題</div>
+        <div class="question-box" id="res-question"></div>
+        <div class="tip">你獲得的答案</div>
+        <div class="answer-big" id="res-answer"></div>
+        <div id="res-note"></div>
+        <div id="res-stats" class="tip"></div>
+        <hr class="divider">
+        <div class="row">
+          <button class="primary" id="btn-again">再玩一次</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>window.__BAKED__={"title":"絡綺生日快樂！！","subtitle":"想打開生日禮物可沒這麼容易。","question":"如果以小時來算的話是一百六十八如果以分鐘來算的話是一萬零八十絡綺的生日禮物截止日期還有一星期請問我還有幾秒可以製作？","answers":"604800、604800秒、六零四八零零、六零四八零零秒","hint":"六位數字","quizLead":"回答完就可以打開禮物了！","finalNote":"604800 ＝ 黑黑黑銀銀銀","startSpeed":400,"speedStep":40,"maxSpeed":800,"warmup":0.9,"jumpV":1040,"gravity":3400,"cutV":320,"landLag":0.07,"buffer":0.11,"doubleJump":false,"cell":34,"maxStack":4,"maxChars":3,"gapScale":1.28,"minGap":1.1,"gapBase":78,"gapStack":22,"viewW":480,"canvasH":340,"heightLink":0.95,"seed":1,"randomSeed":true,"gapJitter":0,"riseChance":60,"allowLift":true,"lowBias":0.4,"sizeBias":0.45,"lieChance":25,"lives":1,"forgive":8,"invincible":false,"deathDelay":0.6,"sfx":true,"sfxVol":0.6,"sfxPass":false,"hudCollected":false,"hudProgress":false,"allowSkip":true,"quizShowQuestion":false,"resultShowQuestion":false,"hintAfter":3,"revealAfter":0,"faceImg":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAQAElEQVR4Aey8BYBWRfc//pm596nt3qVj6UYsUlFBRcQOzFdfA1tfu8VOxCZUQAURUFFUQglp6U5h6dju3SfuzP8zdxdflUUx8Ku//3t3zjNzz5w5c+acM2fiKhJH4NFaC4JN8BcWFiZu37698YoVKzrOnDmz28cff9zvpZde+s8NN9zwZv/+/T+64IILJhA+vuSSS8bddtttb40YMeK2devWnVJZWdmU7RMJHoI4AmIecZZGboLH6GD9+vXNpk2bdsKoUaMuu/fee5+76qqrRnLcZuyfXHTRRROuu+66kY8++ugzn3zyyaXLli07OTc395hgMNiK7dMIUQRJ+NP18Kc6gBGQYFOzCZs3b276+eefd3///ffPHjRo0HUDBw68/7FHHx34zFNPP/DWG29eP2H8+Au+/OKLMwinG/jss8/6jBkz5nw6x7/vu+++G19++eVLtm7a2pm86hMC5PunykqeRzRRXqOHuNWrV2d++umnp7zxxhvXDh406O5BL710x/vvvXfJJx9/fPaXX355+heTJp1GOP2jjz46+523377ssccG3nXzzbc8cvkV/3r47nvuuWXixEln787Obk9h0wjGEcyE+NN08acx4oAtChizdevWRu+9997Jr7zy2jWDB71y35DXX7/74w/HXLVw9qwzcrdv7ZFoq6OPb9GwySW9eiTfeO7p0bf1PyfqmnPODPTufEx0/cT45L07trVcMGdOz7Hvf3jBE088cSFnzYmhUKiR4V3dB4t/30QZzUyN2ru3sM7EiRO7jB0z5uLR77133bQvPr9o54Z1J9VPCLTv2/XoOgMuODP+tv5nR918ft/Axaf0iOrRvnVcerS/Ts7une1WLF3WddaMGb0++vDD8x9/YuB199559/VDhgzpv2nTpt7hcLgVR5/EfjyEPxwR/rADUAgz4EBWVlbdzz/9/Ph3R468aPSHY6/6atKk87ZtXNe5flJ8swHn9U17+e4bop79z/X2bZedbV3Yq4vseXRzcWKbJujRqhFO7dgc1552Ip684UrxxgN32H06HxW3b+fWzNlzZ5/46qtv9JsyZcqpHHgmBx5t+mP+t0zVskXt27ev0UcTRvfhrL580icfXxzO23fcrRefU/vpO28IXHvu6daZXTuJbhx3t1aZ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","faceSize":15,"faceLift":4,"faceTilt":-12,"progressBar":false};</script><script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const stage = $("stage");
+const PRISTINE_STAGE = stage.innerHTML;      // 匯出時用的乾淨版面
+const BAKED = window.__BAKED__ || null;      // 匯出後的玩家版會帶著設定
+
+/* ================= 預設參數 ================= */
+const DEFAULTS = {
+  title:"文字闖關",
+  subtitle:"一邊閃過文字，一邊把它們記在心裡",
+  question:"世界上最高的山是哪一座？",
+  answers:"聖母峰、珠穆朗瑪峰、Everest",
+  hint:"在尼泊爾與西藏交界",
+  quizLead:"還記得剛才那些字問了什麼嗎？寫下你的答案：",
+  finalNote:"",
+  startSpeed:300, speedStep:9, maxSpeed:520, warmup:1.2,
+  jumpV:900, gravity:2500, cutV:320, landLag:0.08, buffer:0.12, doubleJump:false,
+  cell:34, maxStack:3, maxChars:3, gapScale:0.72, minGap:1, gapBase:78, gapStack:22,
+  viewW:480, canvasH:260,
+  heightLink:0.85,
+  seed:1, randomSeed:false, gapJitter:0.12, riseChance:60, allowLift:true, lowBias:0.35, sizeBias:0.3,
+  lieChance:25,
+  lives:1, forgive:5, invincible:false, deathDelay:0.85,
+  sfx:true, sfxVol:0.6, sfxPass:true,
+  hudCollected:false, hudProgress:false, allowSkip:true,
+  quizShowQuestion:false, resultShowQuestion:true, hintAfter:3, revealAfter:0
+};
+
+const SPEC = [
+  {g:"speed", k:"startSpeed", label:"起跑速度", min:150, max:1400, step:10, unit:" px/秒", rebuild:1,
+   note:"畫面捲動速度，越大越快（間距會跟著等比放寬）"},
+  {g:"speed", k:"speedStep", label:"每閃過一組加速", min:0, max:60, step:1, unit:" px/秒", rebuild:1,
+   note:"設 0＝全程等速"},
+  {g:"speed", k:"maxSpeed", label:"速度上限", min:200, max:2000, step:20, unit:" px/秒", rebuild:1},
+  {g:"speed", k:"warmup", label:"開場緩衝", min:0, max:3, step:.1, unit:" 秒",
+   note:"第一個障礙出現前的空白時間", rebuild:1},
+
+  {g:"jump", k:"jumpV", label:"跳躍力", min:400, max:1400, step:10, unit:" px/秒",
+   note:"起跳的初速，決定跳多高"},
+  {g:"jump", k:"gravity", label:"重力", min:1200, max:4500, step:50, unit:" px/秒²",
+   note:"越大＝落下越快、手感越俐落"},
+  {g:"jump", k:"cutV", label:"短跳截斷", min:0, max:900, step:20, unit:" px/秒",
+   note:"放開按鍵時保留的上升速度，越小＝點一下的跳越矮"},
+  {g:"jump", k:"landLag", label:"落地後的起跳間隔", min:0, max:.4, step:.01, unit:" 秒",
+   note:"落地後要等這麼久才能再跳，0＝一落地就能立刻起跳"},
+  {g:"jump", k:"buffer", label:"預輸入緩衝", min:0, max:.4, step:.01, unit:" 秒",
+   note:"提早按下的跳躍會先記住，等落地（且過了間隔）自動跳出去"},
+  {g:"jump", k:"doubleJump", label:"二段跳", type:"check", note:"空中可再跳一次"},
+
+  {g:"level", k:"cell", label:"文字方塊大小", min:22, max:56, step:1, unit:" px", rebuild:1},
+  {g:"level", k:"maxStack", label:"欄高（幾格）", min:1, max:5, step:1, unit:" 格", rebuild:1,
+   note:"每組佔的高度。格子比字多的時候，文字就會在這個範圍內隨機分布"},
+  {g:"level", k:"maxChars", label:"每組最多幾個字", min:1, max:5, step:1, unit:" 個", rebuild:1,
+   note:"超過欄高時以欄高為準"},
+  {g:"level", k:"heightLink", label:"高度連動間距", min:0, max:1, step:.05, unit:"", rebuild:1,
+   note:"0＝每組後面都留一次「跳到最高」的距離（跳滿永遠安全）。越大越依照這一組實際需要的跳躍高度來排：矮的障礙後面會逼得很近，跳太高就會來不及落地"},
+  {g:"level", k:"gapScale", label:"間距係數", min:.4, max:2, step:.02, unit:"×", rebuild:1,
+   note:"1.0＝剛好一次完整跳躍的距離。速度拉高時這個值要跟著調高（約 0.9 以上），否則會來不及落地就撞上下一組"},
+  {g:"level", k:"minGap", label:"最小間隔", min:.5, max:3, step:.05, unit:" 次跳躍", rebuild:1,
+   note:"兩組之間至少要有這麼多次跳躍的距離。1＝上一次跳躍剛好落地，下一組才會到；調高就會更寬鬆"},
+  {g:"level", k:"gapBase", label:"基礎間距", min:0, max:300, step:5, unit:" px", rebuild:1},
+  {g:"level", k:"gapStack", label:"每多一層加寬", min:0, max:80, step:2, unit:" px", rebuild:1},
+  {g:"level", k:"viewW", label:"可視寬度", min:320, max:1000, step:20, unit:"", rebuild:1,
+   note:"一次看得到多長的賽道。數字越小＝畫面被放得越大，但看到障礙物的時間也越短。恐龍固定 34 單位寬，480 大約等於 Chrome 小恐龍的比例"},
+  {g:"level", k:"canvasH", label:"畫面高度", min:180, max:420, step:10, unit:"", rebuild:1,
+   note:"同樣是設計單位，跟可視寬度一起決定畫面的長寬比"},
+
+  {g:"rand", k:"gapJitter", label:"間距隨機加寬", min:0, max:.6, step:.02, unit:"", rebuild:1,
+   note:"只會在基準間距之上隨機加寬、不會變窄，0.12 就是最多 +12%"},
+  {g:"rand", k:"lieChance", label:"橫躺機率", min:0, max:100, step:5, unit:" %", rebuild:1,
+   note:"兩個字以上的組別有這個機率改成「一排躺在地上」而不是往上疊。只有一格高，但很寬，要跳得夠遠才過得去"},
+  {g:"rand", k:"riseChance", label:"高度隨機機率", min:0, max:100, step:5, unit:" %", rebuild:1,
+   note:"每組都是固定欄高（＝最多堆疊的格數）。字數不足時，有這個機率把文字隨機散在格子裡：可能浮在半空、也可能中間空一格"},
+  {g:"rand", k:"lowBias", label:"偏好低處的程度", min:0, max:.8, step:.05, unit:"", rebuild:1,
+   note:"0＝每一格機會均等（高處會很常出現），越大越偏好靠下的格子。下方會即時算出這一關真正頂到最高格的比例"},
+  {g:"rand", k:"allowLift", label:"允許整組離地", type:"check", rebuild:1,
+   note:"關掉＝最底下那格一定貼地，只有上方會留空"},
+  {g:"rand", k:"sizeBias", label:"偏好少字的程度", min:0, max:.8, step:.05, unit:"", rebuild:1,
+   note:"0＝每種字數機會均等（三個字會很常出現），越大越偏好一兩個字的組。下方會即時算出真正的字數分佈"},
+  {g:"rand", k:"seed", label:"隨機種子", min:1, max:999, step:1, unit:"", rebuild:1,
+   note:"同一個種子＝同一種排列，換數字就換一種變化"},
+  {g:"rand", k:"randomSeed", label:"全隨機（每次重開都重骰）", type:"check", rebuild:1,
+   note:"開啟後忽略上面的種子，每一次開始／重來都是全新的排列。自動試跑會改成連續抽驗 20 種可能"},
+
+  {g:"diff", k:"lives", label:"生命數", min:1, max:5, step:1, unit:" 條",
+   note:"1＝一撞就從頭再來"},
+  {g:"diff", k:"forgive", label:"碰撞寬容", min:0, max:14, step:1, unit:" px",
+   note:"判定框往內縮，越大越好過"},
+  {g:"diff", k:"deathDelay", label:"死亡停頓", min:.2, max:2, step:.05, unit:" 秒",
+   note:"撞到後要等這麼久才接受「按空白鍵重來」，避免手殘連按"},
+  {g:"diff", k:"invincible", label:"無敵（只用於試手感，會一起被匯出）", type:"check"},
+
+  {g:"sfx", k:"sfx", label:"開啟音效", type:"check",
+   note:"用 Web Audio 即時合成，不需要外部檔案"},
+  {g:"sfx", k:"sfxVol", label:"音量", min:0, max:1, step:.05, unit:""},
+  {g:"sfx", k:"sfxPass", label:"閃過障礙時的音階", type:"check",
+   note:"每閃過一組往上升一個音，連續閃過會串成一小段旋律"},
+
+  {g:"quiz", k:"hudCollected", label:"遊戲中顯示已閃過的文字", type:"check",
+   note:"關掉＝玩家得自己記住（預設關閉）"},
+  {g:"quiz", k:"hudProgress", label:"遊戲中顯示進度數字", type:"check"},
+  {g:"quiz", k:"allowSkip", label:"允許中途直接作答", type:"check",
+   note:"遊戲畫面多一顆「我要作答」按鈕，沒跑完也能猜"},
+  {g:"quiz", k:"quizShowQuestion", label:"作答時把題目秀出來", type:"check",
+   note:"關掉＝只憑記憶作答"},
+  {g:"quiz", k:"hintAfter", label:"答錯幾次後給提示", min:1, max:9, step:1, unit:" 次"},
+  {g:"quiz", k:"revealAfter", label:"答錯幾次後揭曉題目", min:0, max:9, step:1, unit:" 次",
+   note:"0＝永不揭曉"},
+  {g:"quiz", k:"resultShowQuestion", label:"結果畫面顯示題目", type:"check"}
+];
+
+const SAMPLES = ["世界上最高的山是哪一座？","一年有幾個月？","彩虹有幾種顏色？","台灣最長的河川是什麼？","你今天最想跟誰說謝謝？"];
+
+/* 把設定洗乾淨：舊版存下來的設定、被改壞的數值、或缺少的欄位，
+   一律用預設值補回去。少了這一步，任何一個壞掉的值都會讓整個面板的數字消失。 */
+function sanitize(c){
+  SPEC.forEach(s=>{
+    if(s.type === "check"){
+      c[s.k] = (c[s.k] === undefined || c[s.k] === null) ? !!DEFAULTS[s.k] : !!c[s.k];
+    }else{
+      const v = parseFloat(c[s.k]);
+      c[s.k] = isFinite(v) ? Math.min(s.max, Math.max(s.min, v)) : DEFAULTS[s.k];
+    }
+  });
+  ["title","subtitle","question","answers","hint","quizLead","finalNote"].forEach(k=>{
+    if(typeof c[k] !== "string") c[k] = DEFAULTS[k] || "";
+  });
+  return c;
+}
+let CFG = sanitize(Object.assign({}, DEFAULTS, BAKED || loadSaved()));
+function loadSaved(){
+  try{ const s = localStorage.getItem("wordrunner.cfg"); return s ? JSON.parse(s) : {}; }catch(e){ return {}; }
+}
+function save(){
+  if(BAKED) return;
+  try{ localStorage.setItem("wordrunner.cfg", JSON.stringify(sanitize(CFG))); }catch(e){}
+}
+
+/* ================= 小工具 ================= */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function show(name){["title","game","quiz","result"].forEach(s=>$("scr-"+s).classList.toggle("on", s===name));}
+
+/* ================= 音效（Web Audio 即時合成，不需外部檔案） ================= */
+let AC = null, MASTER = null, muted = false;
+function ac(){
+  if(AC === false) return null;
+  if(!AC){
+    try{
+      const C = window.AudioContext || window.webkitAudioContext;
+      if(!C){ AC = false; return null; }
+      AC = new C();
+      MASTER = AC.createGain();
+      MASTER.gain.value = 0.55;
+      MASTER.connect(AC.destination);
+    }catch(e){ AC = false; return null; }
+  }
+  if(AC.state === "suspended"){ try{ AC.resume(); }catch(e){} }
+  return AC;
+}
+function sfxOn(){ return CFG.sfx && !muted && CFG.sfxVol > 0; }
+function blip(f0, f1, dur, type, vol, delay){
+  if(!sfxOn()) return;
+  const c = ac(); if(!c) return;
+  try{
+    const t0 = c.currentTime + (delay||0);
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type || "triangle";
+    o.frequency.setValueAtTime(f0, t0);
+    if(f1 && f1 !== f0) o.frequency.exponentialRampToValueAtTime(Math.max(20,f1), t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime((vol==null?0.2:vol) * CFG.sfxVol, t0 + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(MASTER);
+    o.start(t0); o.stop(t0 + dur + 0.03);
+  }catch(e){}
+}
+function noiseBurst(dur, vol){
+  if(!sfxOn()) return;
+  const c = ac(); if(!c) return;
+  try{
+    const n = Math.floor(c.sampleRate * dur);
+    const buf = c.createBuffer(1, n, c.sampleRate);
+    const dat = buf.getChannelData(0);
+    for(let i=0;i<n;i++) dat[i] = (Math.random()*2-1) * Math.pow(1 - i/n, 2);
+    const src = c.createBufferSource(); src.buffer = buf;
+    const f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 1400;
+    const g = c.createGain(); g.gain.value = (vol==null?0.2:vol) * CFG.sfxVol;
+    src.connect(f); f.connect(g); g.connect(MASTER);
+    src.start();
+  }catch(e){}
+}
+const PENTA = [0,2,4,7,9,12,14,16,19,21,24,26,28,31];   // 五聲音階，怎麼串都好聽
+const sJump  = ()=> blip(380, 720, 0.10, "triangle", 0.16);
+const sLand  = ()=> blip(200, 120, 0.055, "sine", 0.07);
+const sPass  = i => { if(CFG.sfxPass) blip(440*Math.pow(2, PENTA[Math.min(i, PENTA.length-1)]/12), null, 0.13, "sine", 0.13); };
+const sHurt  = ()=> blip(300, 150, 0.16, "square", 0.10);
+const sDie   = ()=> { noiseBurst(0.22, 0.16); blip(320, 70, 0.34, "sawtooth", 0.15); };
+const sClear = ()=> [0,4,7,12].forEach((s,k)=> blip(440*Math.pow(2,s/12), null, 0.17, "triangle", 0.15, k*0.085));
+const sRight = ()=> [0,4,7,12].forEach((s,k)=> blip(523.25*Math.pow(2,s/12), null, 0.55, "sine", 0.11, k*0.055));
+const sWrong = ()=> blip(230, 165, 0.24, "square", 0.10);
+
+/* ================= 關卡 ================= */
+const level = {text:"",answers:[],hint:"",chars:[],groups:[]};
+/* 加權抽樣：權重 (1-bias)^i，bias 為 0 時等同等機率 */
+function pickWeighted(rnd, n, bias){
+  let total = 0; const w = [];
+  for(let i=0;i<n;i++){ const v = Math.pow(1-bias, i); w.push(v); total += v; }
+  let r = rnd()*total, k = 0;
+  while(k < n-1 && r > w[k]){ r -= w[k]; k++; }
+  return k;
+}
+function buildGroups(chars,seed,maxChars,sizeBias){
+  const rnd = mulberry32(seed); const g=[]; let i=0;
+  while(i<chars.length){
+    let n = 1 + pickWeighted(rnd, maxChars, sizeBias);
+    n = Math.min(n, chars.length - i);
+    g.push(chars.slice(i,i+n)); i += n;
+  }
+  return g;
+}
+/* 這一輪實際使用的種子：開啟「每次重開換一種」時用當輪骰出來的 */
+function curSeed(){ return CFG.randomSeed ? game.runSeed : Math.round(CFG.seed); }
+function groupsFor(seed){
+  const s = (level.text.length*2654435761 + level.chars.length*97 + seed*40503) >>> 0;
+  const maxChars = Math.max(1, Math.min(Math.round(CFG.maxChars), Math.round(CFG.maxStack)));
+  return buildGroups(level.chars, s, maxChars, CFG.sizeBias);
+}
+function prepareLevel(){
+  level.text = String(CFG.question||"").trim();
+  level.answers = String(CFG.answers||"").split(/[、,，\/|]/).map(s=>s.trim()).filter(Boolean);
+  level.hint = String(CFG.hint||"").trim();
+  level.chars = Array.from(level.text).filter(c=>!/\s/.test(c));
+  level.groups = groupsFor(curSeed());
+}
+
+/* ================= 引擎 ================= */
+const cv = $("cv"), ctx = cv.getContext("2d");
+const INK = "#535353";
+/* 遊戲世界一律用「設計單位」計算，畫面再整個縮放上去。
+   這樣不管瀏覽器多寬，看到的賽道長度都一樣（難度一致），只是整體變大變小。 */
+let W=480, H=260, DPR=1, groundY=205, SCALE=1;
+const player = {x:60,y:0,vy:0,w:34,h:42,onGround:true,air:0,jumpsLeft:0,inv:0};
+const game = {running:false,t:0,last:0,speed:300,scroll:0,obstacles:[],passed:0,
+  deaths:0,startTime:0,raf:0,dying:false,dieT:0,cleared:false,clearT:0,hills:[],hearts:1,
+  lagT:0,bufferT:0,falling:[],runSeed:1};
+
+function resize(){
+  const rect = cv.parentElement.getBoundingClientRect();
+  const cssW = Math.max(240, Math.floor(rect.width - 36));
+  W = Math.max(200, Math.round(CFG.viewW));      // 設計單位：賽道寬度，固定不隨視窗變
+  H = Math.max(140, Math.round(CFG.canvasH));    // 設計單位：畫面高度
+  SCALE = cssW / W;                              // 一個設計單位 = 幾個畫面像素
+  const cssH = Math.max(1, Math.round(H * SCALE));
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  cv.width = Math.round(cssW*DPR); cv.height = Math.round(cssH*DPR);
+  cv.style.height = cssH + "px";
+  ctx.setTransform(DPR*SCALE, 0, 0, DPR*SCALE, 0, 0);   // 之後畫的東西全部自動放大
+  groundY = H - Math.round(H*0.21);
+}
+window.addEventListener("resize", resize);
+
+const DUCK_H = 48;   // 離地超過這個高度，玩家可以直接從底下跑過去
+let onLevelRebuilt = null;   // 面板會掛上來，用來即時更新數據
+
+/* 依目前參數排出整關的障礙物（遊戲與自動試跑共用同一份，確保一致） */
+function buildObstacles(baseW, groups, seed){
+  groups = groups || level.groups;
+  seed = (seed==null) ? curSeed() : seed;
+  const cell = Math.round(CFG.cell);
+  const slots = Math.max(1, Math.round(CFG.maxStack));   // 固定欄高（格數）
+  const out = [];
+  let x = baseW + CFG.startSpeed*CFG.warmup + 60;
+  let sp = CFG.startSpeed;
+  groups.forEach((g,i)=>{
+    const rnd = mulberry32((((seed*7919) ^ (i*104729)) >>> 0) || 1);
+    // 每一組都佔固定的欄高（slots 格）。字數不足時，把文字隨機分配到其中幾格，
+    // 沒被佔到的格子就成為離地的空間或中間的空隙。
+    // 另一種型態：整組「橫躺」成一排貼在地上，只有一格高但很寬。
+    const lie = g.length > 1 && rnd()*100 < CFG.lieChance;
+    if(lie){
+      const cells = g.map((ch,k)=>({dx:k*cell, top:cell, ch:ch}));
+      const o = {x:x, w:g.length*cell, chars:g, cells:cells, float:0, topOff:cell,
+                 duckable:false, lie:true, n:g.length, i:i, seed:(i*9301+49297)>>>0, passed:false};
+      out.push(o);
+      sp = Math.min(CFG.maxSpeed, sp + CFG.speedStep);
+      const gapL = gapFor(sp, o.topOff, o.w) * (1 + rnd()*CFG.gapJitter);
+      o.gapAfter = gapL; o.speedAfter = sp;
+      x += o.w + gapL;
+      return;
+    }
+    let idx;
+    if(g.length >= slots || rnd()*100 >= CFG.riseChance){
+      idx = g.map((_,k)=>k);                       // 貼地、緊密堆疊
+    }else{
+      // 加權抽格：權重 (1-lowBias)^格號，越高的格子越不容易被選中
+      const lockBottom = !CFG.allowLift;
+      const pool = [];
+      for(let s=(lockBottom?1:0); s<slots; s++) pool.push(s);
+      idx = lockBottom ? [0] : [];
+      const need = g.length - (lockBottom?1:0);
+      for(let t=0; t<need; t++){
+        let total=0;
+        const wts = pool.map(s=>{ const v = Math.pow(1-CFG.lowBias, s); total += v; return v; });
+        let r = rnd()*total, k = 0;
+        while(k < pool.length-1 && r > wts[k]){ r -= wts[k]; k++; }
+        idx.push(pool[k]); pool.splice(k,1);
+      }
+      idx.sort((a,b)=>a-b);
+    }
+    // 直立：同一個 x、往上疊；文字由上往下讀
+    const cells = idx.map((s,k)=>({dx:0, top:(s+1)*cell, ch:g[g.length-1-k]}));
+    const flt = idx[0]*cell;                       // 最底下那格離地多高
+    // 這一組的高度＝最高那個方塊的上緣，跟它由幾個字組成無關
+    const topOff = (idx[idx.length-1]+1)*cell;
+    const duckable = flt >= DUCK_H;                // 底下鑽得過去（但間距仍以最高處計算）
+    const o = {x:x, w:cell, chars:g, cells:cells, float:flt, topOff:topOff, duckable:duckable,
+               lie:false, n:g.length, i:i, seed:(i*9301+49297)>>>0, passed:false};
+    out.push(o);
+    sp = Math.min(CFG.maxSpeed, sp + CFG.speedStep);
+    const gap = gapFor(sp, topOff, o.w) * (1 + rnd()*CFG.gapJitter);   // 只會變寬，不會變窄
+    o.gapAfter = gap; o.speedAfter = sp;
+    x += o.w + gap;
+  });
+  return out;
+}
+
+/* 難度估計：每一組允許「按下跳躍」的時間窗口有多寬（玩家可以自由選擇跳多高，
+   但跳太高會來不及落地）。取全關最窄的那一個，這才是人類真正的難度。 */
+function timingStats(obs){
+  let worst = Infinity, at = 0;
+  for(let i=0;i<obs.length;i++){
+    const o = obs[i];
+    if(o.duckable) continue;
+    const speed = o.speedAfter || CFG.startSpeed;
+    const cross = (o.w + 34)/speed;
+    const budget = (o.gapAfter==null) ? Infinity : (o.w + 34 + o.gapAfter)/speed;
+    const maxA = jumpHeight();
+    let best = -Infinity;
+    const step = Math.max(2, (maxA - o.topOff)/24);
+    for(let A = o.topOff + 6; A <= maxA; A += step){
+      const p = jumpProfile(o.topOff + 2, A);
+      if(!p.ok) continue;
+      if(p.tLand > budget) break;                 // 跳這麼高會來不及落地
+      const wnd = (p.tExit - cross) - p.tEnter;   // 可以按下跳躍的時間範圍
+      if(wnd > best) best = wnd;
+    }
+    if(best < worst){ worst = best; at = i+1; }
+  }
+  return {ms: isFinite(worst) ? Math.round(worst*1000) : null, at:at};
+}
+
+/* 自動試跑：用一個「盡量早跳」的理想機器人跑一次關卡，確認參數是否可通關 */
+function autoTest(seed){
+  const cell = Math.round(CFG.cell), PW = player.w, PH = player.h, PX = player.x;
+  const gy = Math.round(CFG.canvasH) - Math.round(Math.round(CFG.canvasH)*0.21);
+  const groups = (seed==null) ? level.groups : groupsFor(seed);
+  const obs = buildObstacles(Math.round(CFG.viewW), groups, seed==null ? curSeed() : seed);
+  if(!obs.length) return {ok:true};
+  // 機器人會按照每一組實際的高度控制跳躍力道（該點放就點放），不是每次都跳滿
+  const P={h:0,v:0,onGround:true};
+  let passed=0, f=0, dt=1/60, lag=0, releaseH=0, released=true, minSlack=Infinity;
+  while(passed < obs.length && f < 200000){
+    f++;
+    const speed = Math.min(CFG.maxSpeed, CFG.startSpeed + passed*CFG.speedStep), dx = speed*dt;
+    let nxt=null;
+    for(const o of obs){ if(o.x + o.w >= PX){ nxt = o; break; } }
+    if(nxt && P.onGround && !nxt.duckable){          // 鑽得過去就不用跳
+      const need = nxt.topOff + 2;
+      const prof = jumpProfile(need, apexFor(need, speed, nxt.w));
+      if(!prof.ok) return {ok:false, why:"跳躍高度不足，越不過第 "+(nxt.i+1)+" 組（需要 "+Math.round(need)+" px）"};
+      const cross = (nxt.w + PW)/speed;
+      if(prof.tExit - prof.tEnter < cross) return {ok:false, why:"滯空時間不足以橫越第 "+(nxt.i+1)+" 組"};
+      const tt = (nxt.x - (PX + PW))/speed;
+      const latest = prof.tExit - cross;             // 最晚可以起跳的時機
+      if(lag <= 0){
+        if(tt > 0 && tt <= latest){
+          P.v = CFG.jumpV; P.onGround = false; releaseH = prof.hr; released = false;
+          minSlack = Math.min(minSlack, latest - prof.tEnter);   // 這一跳的容錯窗口
+        }
+      }else if(tt > 0 && tt < prof.tEnter){
+        return {ok:false, why:"落地後的起跳間隔太長，來不及跳過第 "+(nxt.i+1)+" 組"};
+      }
+    }
+    const wasAir = !P.onGround;
+    if(!P.onGround && !released && P.h >= releaseH){ if(P.v > CFG.cutV) P.v = CFG.cutV; released = true; }
+    P.v -= CFG.gravity*dt; P.h += P.v*dt;
+    if(P.h <= 0){ P.h = 0; P.v = 0; P.onGround = true; released = true; if(wasAir) lag = CFG.landLag; }
+    else P.onGround = false;
+    lag = Math.max(0, lag - dt);
+    const py = gy - PH - P.h;
+    for(const o of obs){
+      o.x -= dx;
+      if(PX + PW - CFG.forgive > o.x + 3 && PX + CFG.forgive < o.x + o.w - 3){
+        for(const b of o.cells){
+          const bl = o.x + b.dx, br = bl + cell;
+          if(PX + PW - CFG.forgive <= bl + 3 || PX + CFG.forgive >= br - 3) continue;
+          const bt = gy - b.top, bb = bt + cell;
+          if(py + PH - 4 > bt + 3 && py + 4 < bb - 3)
+            return {ok:false, why:"空間太窄：跳躍的落點會撞上第 "+(o.i+1)+" 組（把「間距係數」調高，或降低速度）"};
+        }
+      }
+      if(!o.passed && o.x + o.w < PX){ o.passed = true; passed++; }
+    }
+  }
+  return {ok: passed === obs.length, slack: minSlack};
+}
+
+function airTime(){ return 2*CFG.jumpV/CFG.gravity; }
+function jumpHeight(){ return (CFG.jumpV*CFG.jumpV)/(2*CFG.gravity); }
+
+/* 「剛好越過 need 這個高度」的最小跳躍長什麼樣子：
+   起跳一律是滿速，玩家在高度 hr 放開按鍵（速度被截到 cutV），頂點剛好落在 need。
+   回傳這一跳的滯空時間、以及在 need 高度以上的時間區間。 */
+const PROFILES = new Map();
+/* 要越過 need 這個高度、而且要在它上面待滿 cross（跨過整個寬度所需的時間），
+   頂點至少得跳到多高。因為有短跳截斷，上升遠比下降快，不能用對稱拋物線估，
+   直接拿真實軌跡二分搜尋。頂點量化到 2px，讓軌跡快取容易命中。 */
+const APEX_CACHE = new Map();
+function apexFor(need, speed, width){
+  const cross = ((width || Math.round(CFG.cell)) + 34)/Math.max(1, speed);
+  const key = need.toFixed(1)+"|"+cross.toFixed(3)+"|"+CFG.jumpV+"|"+CFG.gravity+"|"+CFG.cutV;
+  const hit = APEX_CACHE.get(key);
+  if(hit !== undefined) return hit;
+  const maxA = jumpHeight();
+  const okAt = A => { const p = jumpProfile(need, A); return p.ok && (p.tExit - p.tEnter) >= cross*1.06; };
+  let lo = need + 6, hi = maxA, ans;
+  if(lo >= hi || !okAt(maxA)){
+    ans = Math.max(lo, maxA);                  // 再高也不夠，交給後面的判定回報失敗
+  }else{
+    for(let i=0;i<10;i++){
+      const mid = Math.round((lo+hi)/4)*2;     // 量化到 2px
+      if(mid <= lo || mid >= hi) break;
+      if(okAt(mid)) hi = mid; else lo = mid;
+    }
+    ans = hi;
+  }
+  APEX_CACHE.set(key, ans);
+  return ans;
+}
+function jumpProfile(need, apex){
+  need = Math.max(0, need);
+  apex = Math.max(apex, need + 6);
+  const key = need.toFixed(1)+"|"+apex.toFixed(1)+"|"+CFG.jumpV+"|"+CFG.gravity+"|"+CFG.cutV;
+  const cached = PROFILES.get(key);
+  if(cached) return cached;
+  const g = CFG.gravity, v0 = CFG.jumpV, cut = CFG.cutV;
+  if(apex > jumpHeight()){                          // 跳不了那麼高
+    const r = {ok:false, tLand:airTime(), tEnter:0, tExit:0, hr:0};
+    PROFILES.set(key, r); return r;
+  }
+  const hr = Math.max(0, apex - cut*cut/(2*g));     // 該在多高放開按鍵
+  let h = 0, v = v0, t = 0, released = false;
+  const dt = 1/600;
+  let tEnter = null, tExit = null;
+  while(t < 4){
+    if(!released && h >= hr){ if(v > cut) v = cut; released = true; }
+    v -= g*dt; h += v*dt; t += dt;
+    if(h >= need){ if(tEnter === null) tEnter = t; tExit = t; }
+    if(h <= 0){ h = 0; break; }
+  }
+  if(need <= 0){ tEnter = 0; tExit = t; }
+  const r = {tLand:t, tEnter:tEnter, tExit:tExit, hr:hr, ok: tEnter !== null};
+  PROFILES.set(key, r);
+  return r;
+}
+
+/* 這一組之後要留多少距離：need 是這一組實際要越過的高度（可鑽過的為 0）。
+   heightLink 為 1 時完全依照「這一跳實際需要多久」來排，矮的障礙後面就會逼近。 */
+function gapFor(speed, need, width){
+  const full = airTime();
+  const prof = jumpProfile(need, apexFor(need, speed, width));
+  const tNeed = prof.ok ? Math.min(prof.tLand, full) : full;
+  const ratio = tNeed/full;                       // 這一跳只需要滿跳的幾成時間
+  const cell = Math.max(1, Math.round(CFG.cell));
+  const base = speed*full*CFG.gapScale + CFG.gapBase + (need/cell)*CFG.gapStack;
+  const g = base * (1 - CFG.heightLink*(1-ratio));  // 整段距離（含固定值）一起縮
+  // 下限：這一跳的滯空 ＋ 落地後不能立刻再跳的那段時間，否則生成的關卡人跳不動
+  return Math.max(g, CFG.minGap * speed * (tNeed + CFG.landLag));
+}
+
+function startLevel(){
+  resize();
+  if(CFG.randomSeed){                    // 每次重開都骰一次新的排列
+    game.runSeed = 1 + Math.floor(Math.random()*99999);
+    prepareLevel();
+    if(typeof onLevelRebuilt === "function") onLevelRebuilt();   // 讓面板的數據跟著更新
+  }
+  player.y=0; player.vy=0; player.onGround=true; player.inv=0; player.jumpsLeft=0;
+  game.t=0; game.scroll=0; game.passed=0; game.speed=CFG.startSpeed;
+  game.dying=false; game.dieT=0; game.cleared=false; game.clearT=0;
+  game.hearts = Math.max(1, Math.round(CFG.lives));
+  game.lagT=0; game.bufferT=0; game.falling=[];
+  game.obstacles = buildObstacles(W);
+  game.hills=[]; const hr = mulberry32(1234);
+  for(let i=0;i<14;i++) game.hills.push({x:i*180+hr()*60, r:50+hr()*70});
+  renderCollected();
+  game.running=true; game.last=performance.now();
+  if(!game.startTime) game.startTime = Date.now();
+  cancelAnimationFrame(game.raf);
+  game.raf = requestAnimationFrame(loop);
+}
+
+/* 遊戲畫面的主要輸入：死掉時是「重來」，其他時候是「跳」 */
+function press(){
+  if(game.dying){
+    if(game.dieT >= CFG.deathDelay) startLevel();
+    return;
+  }
+  jump();
+}
+function jump(){
+  if(!game.running || game.dying || game.cleared) return;
+  if(player.onGround){
+    if(game.lagT > 0){ game.bufferT = CFG.buffer; return; }   // 剛落地，先把這次輸入記著
+    player.vy = -CFG.jumpV; player.onGround = false; game.bufferT = 0;
+    player.jumpsLeft = CFG.doubleJump ? 1 : 0;
+    sJump();
+  }else if(player.jumpsLeft > 0){
+    player.vy = -CFG.jumpV*0.92; player.jumpsLeft--;
+    sJump();
+  }else{
+    game.bufferT = CFG.buffer;
+  }
+}
+function releaseJump(){ if(player.vy < -CFG.cutV) player.vy = -CFG.cutV; }
+
+function hit(){
+  if(CFG.invincible || player.inv > 0 || game.dying) return;
+  game.hearts--;
+  if(game.hearts > 0){ player.inv = 1.1; sHurt(); return; }
+  game.dying = true; game.dieT = 0; game.deaths++; game.passed = 0;
+  sDie();
+  spillChars();          // 文字從格子裡掉出來、散掉，不讓人靠一直死來慢慢讀
+  renderCollected();
+}
+
+/* 死亡時把畫面上所有文字變成掉落的碎片 */
+function spillChars(){
+  const cell = Math.round(CFG.cell);
+  game.falling = [];
+  for(const o of game.obstacles){
+    if(o.x > W + 60 || o.x + o.w < -60) continue;
+    for(const b of o.cells){
+      game.falling.push({
+        ch: b.ch,
+        x: o.x + b.dx + cell/2,
+        y: groundY - b.top + cell/2,
+        vx: (Math.random()-0.5)*220,
+        vy: -80 - Math.random()*220,
+        rot: 0,
+        vr: (Math.random()-0.5)*9,
+        life: 0
+      });
+    }
+  }
+}
+
+/* 主迴圈的外殼：就算這一幀算壞了也要把下一幀排出去，畫面絕不定格 */
+function loop(now){
+  const before = game.raf;
+  try{
+    frame(now);
+  }catch(e){
+    if(!drawErr) drawErr = (e && e.message ? e.message : String(e));
+    if(game.raf === before) game.raf = requestAnimationFrame(loop);
+  }
+}
+
+function frame(now){
+  // 時間差一旦變成 NaN（例如瀏覽器沒給時間戳），game.t 會永遠是 NaN，
+  // 後面所有依賴它的計算都會壞掉，所以這裡先擋住。
+  let dt = (now - game.last)/1000;
+  if(!isFinite(dt) || dt < 0) dt = 1/60;
+  dt = Math.min(0.033, dt);
+  game.last = isFinite(now) ? now : (game.last + dt*1000);
+  if(!isFinite(game.t)) game.t = 0;
+  game.t += dt;
+
+  if(game.dying){
+    game.dieT += dt;
+    if(game.dieT < CFG.deathDelay){                 // 停頓期間身體往下掉，之後定格等玩家按鍵
+      player.vy += CFG.gravity*dt*0.6; player.y += player.vy*dt;
+    }
+    for(const p of game.falling){                   // 文字碎片繼續掉、繼續淡出
+      p.vy += 1700*dt; p.x += p.vx*dt; p.y += p.vy*dt;
+      p.rot += p.vr*dt; p.life += dt;
+    }
+    if(game.dieT >= CFG.deathDelay) showDeathRow(true);
+    draw();
+    game.raf = requestAnimationFrame(loop); return;
+  }
+  if(game.cleared){
+    game.clearT += dt; game.scroll += game.speed*dt; stepPlayer(dt);
+    draw();
+    if(game.clearT > 1.1){ game.running=false; goQuiz(); return; }
+    game.raf = requestAnimationFrame(loop); return;
+  }
+
+  game.speed = Math.min(CFG.maxSpeed, CFG.startSpeed + game.passed*CFG.speedStep);
+  const dx = game.speed*dt;
+  game.scroll += dx;
+  stepPlayer(dt);
+  if(player.inv > 0) player.inv -= dt;
+
+  const px = player.x, py = groundY - player.h + player.y;
+  const pad = CFG.forgive;
+  let allGone = level.groups.length > 0;
+
+  const cellNow = Math.round(CFG.cell);
+  for(const o of game.obstacles){
+    o.x -= dx;
+    if(px + player.w - pad > o.x + 3 && px + pad < o.x + o.w - 3){
+      for(const b of o.cells){
+        const bl = o.x + b.dx, br = bl + cellNow;
+        if(px + player.w - pad <= bl + 3 || px + pad >= br - 3) continue;
+        const bt = groundY - b.top, bb = bt + cellNow;
+        if(py + player.h - 4 > bt + 3 && py + 4 < bb - 3){
+          hit();
+          if(game.dying){ draw(); game.raf = requestAnimationFrame(loop); return; }
+          break;
+        }
+      }
+    }
+    if(!o.passed && o.x + o.w < px){ o.passed = true; game.passed++; sPass(game.passed-1); renderCollected(); }
+    if(o.x + o.w > -40) allGone = false;
+  }
+  if(allGone && !game.cleared){ game.cleared = true; sClear(); }
+
+  draw();
+  game.raf = requestAnimationFrame(loop);
+}
+
+function stepPlayer(dt){
+  const wasAir = !player.onGround;
+  player.vy += CFG.gravity*dt;
+  player.y += player.vy*dt;
+  if(player.y >= 0){
+    player.y = 0; player.vy = 0; player.onGround = true;
+    if(wasAir){ game.lagT = CFG.landLag; sLand(); }   // 剛落地：進入起跳間隔
+  }else{
+    player.onGround = false;
+  }
+  game.lagT = Math.max(0, game.lagT - dt);
+  game.bufferT = Math.max(0, game.bufferT - dt);
+  // 間隔一過，把記著的那次跳躍放出去
+  if(player.onGround && game.lagT <= 0 && game.bufferT > 0){ game.bufferT = 0; jump(); }
+}
+
+/* ================= 繪圖（Chrome 離線恐龍風：白底、單色 #535353、硬邊像素） ================= */
+const px = v => Math.round(v);                  // 一律對齊整數像素，避免糊邊
+
+/* 繪圖若拋出例外，動畫迴圈就會斷掉、畫面定格。
+   包一層保險：出錯就記下來顯示在畫面上，但遊戲繼續跑。 */
+let drawErr = null;
+function draw(){
+  try{ drawScene(); }
+  catch(e){
+    if(!drawErr){ drawErr = (e && e.message ? e.message : String(e)); }
+    try{
+      ctx.fillStyle = "#8f3d2b";
+      ctx.font = '12px ui-monospace,Menlo,Consolas,monospace';
+      ctx.textAlign = "left"; ctx.textBaseline = "top";
+      ctx.fillText("繪圖錯誤：" + drawErr, 12, 12);
+    }catch(_){}
+  }
+}
+
+function drawScene(){
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0,0,W,H);
+  const cell = Math.round(CFG.cell);
+  ctx.lineCap = "butt"; ctx.lineJoin = "miter";
+
+  // 遠景像素雲
+  ctx.fillStyle = "#c8c8c8";
+  const coff = -(game.scroll*0.22) % (14*180);
+  for(const h of game.hills){
+    const hx = px(h.x + coff), hy = px(groundY - 150 - (h.r % 60));
+    if(hx < -90 || hx > W+90 || hy < 8) continue;
+    const u = 4;                                 // 像素單位
+    ctx.fillRect(hx+u*2, hy,       u*6, u);
+    ctx.fillRect(hx+u,   hy+u,     u*9, u);
+    ctx.fillRect(hx,     hy+u*2,   u*11, u);
+    ctx.fillRect(hx+u,   hy+u*3,   u*9, u);
+  }
+
+  // 地面：一條實線 + 隨機小石子
+  ctx.fillStyle = "#535353";
+  ctx.fillRect(0, px(groundY), W, 2);
+  const step = 34, off = -(game.scroll % step);
+  for(let x=off; x<W+step; x+=step){
+    const r2 = mulberry32(Math.floor((game.scroll+x)/step)*7919);
+    if(r2() < 0.55) continue;
+    const w = 2 + Math.floor(r2()*4), yy = px(groundY + 5 + Math.floor(r2()*7));
+    ctx.fillRect(px(x + r2()*12), yy, w, 2);
+  }
+
+  // 障礙物：灰色外框、透明底、灰色文字
+  const B = 2;                                 // 框線粗細
+  for(const o of game.obstacles){
+    if(o.x > W+60 || o.x + o.w < -60) continue;
+    for(const b of o.cells){
+      const cx = px(o.x + b.dx), cy = px(groundY - b.top);
+      ctx.fillStyle = "#535353";
+      ctx.fillRect(cx, cy, cell, B);                 // 上
+      ctx.fillRect(cx, cy+cell-B, cell, B);          // 下
+      ctx.fillRect(cx, cy, B, cell);                 // 左
+      ctx.fillRect(cx+cell-B, cy, B, cell);          // 右
+      if(!game.dying){                       // 死掉時框留著、字掉出去
+        ctx.font = "700 " + (cell-12) + 'px ui-monospace,Menlo,Consolas,"PingFang TC","Microsoft JhengHei",monospace';
+        ctx.textAlign="center"; ctx.textBaseline="middle";
+        ctx.fillText(b.ch, cx+cell/2, cy+cell/2+1);
+      }
+    }
+  }
+
+  // 掉落中的文字碎片
+  if(game.falling.length){
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font = "700 " + (cell-12) + 'px ui-monospace,Menlo,Consolas,"PingFang TC","Microsoft JhengHei",monospace';
+    for(const p of game.falling){
+      const a = 1 - p.life/0.55;
+      if(a <= 0 || p.y > H + 40) continue;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, a);
+      ctx.translate(px(p.x), px(p.y)); ctx.rotate(p.rot);
+      ctx.fillStyle = "#535353";
+      ctx.fillText(p.ch, 0, 0);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  drawRunner();
+
+  if(CFG.lives > 1){
+    ctx.fillStyle = "#535353";
+    ctx.font = '700 13px ui-monospace,Menlo,Consolas,monospace';
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText("HP " + "■".repeat(Math.max(0,game.hearts)), 14, 14);
+  }
+
+  if(game.dying){
+    ctx.fillStyle = "rgba(255,255,255,.72)"; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = "#535353"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font = '700 22px ui-monospace,Menlo,Consolas,"PingFang TC","Microsoft JhengHei",monospace';
+    ctx.fillText("G A M E   O V E R", W/2, H/2 - 18);
+    if(game.dieT >= CFG.deathDelay){
+      drawReloadIcon(px(W/2 - 10), px(H/2 + 8));
+      ctx.fillStyle = "#a3a3a3";
+      ctx.font = '12px ui-monospace,Menlo,Consolas,"PingFang TC","Microsoft JhengHei",monospace';
+      ctx.fillText("按空白鍵或點一下畫面，從頭再來", W/2, H/2 + 44);
+    }
+  }
+  if(game.cleared){
+    ctx.fillStyle = "rgba(255,255,255,.72)"; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = "#535353"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.font = '700 22px ui-monospace,Menlo,Consolas,"PingFang TC","Microsoft JhengHei",monospace';
+    ctx.fillText("C L E A R", W/2, H/2);
+  }
+}
+
+/* 重玩圖示：一個像素風的循環箭頭 */
+function drawReloadIcon(x, y){
+  ctx.fillStyle = "#535353";
+  const u = 2;
+  ctx.fillRect(x+u*2, y,       u*6, u);
+  ctx.fillRect(x,     y+u,     u*2, u);
+  ctx.fillRect(x+u*8, y+u,     u*2, u);
+  ctx.fillRect(x,     y+u*2,   u,   u*3);
+  ctx.fillRect(x+u*9, y+u*2,   u,   u*3);
+  ctx.fillRect(x,     y+u*5,   u*2, u);
+  ctx.fillRect(x+u*8, y+u*5,   u*2, u);
+  ctx.fillRect(x+u*2, y+u*6,   u*6, u);
+  ctx.fillRect(x+u*7, y-u,     u,   u*3);   // 箭頭
+  ctx.fillRect(x+u*9, y-u,     u,   u*3);
+}
+
+/* 像素恐龍：17×21 的格點圖，'#' 深灰、'o' 眼睛、'.' 透空。
+   身體 18 列固定，最後 3 列換腳做出跑步動畫。 */
+const DINO_BODY = [
+  ".........######..",
+  "........########.",
+  "........#########",
+  "........###o#####",
+  "........#########",
+  "........#########",
+  "........########.",
+  "........#####....",
+  "#.......#####....",
+  "##.....######....",
+  "###...#######....",
+  "#############....",
+  ".#############...",
+  "..############...",
+  "...##########....",
+  "...#########.....",
+  "...########......"
+];
+/* 會動的是最下面四列：抬腿、伸腿、腳掌位置都會換，動作才看得出來 */
+const DINO_LEGS = [
+  ["...##..###.......", "...##...##.......", "...##............", "..####..........."],  // 後腳著地
+  ["...###..##.......", "..##....##.......", "........##.......", ".......####......"],  // 前腳著地
+  ["...##..##........", "...##..##........", "...##..##........", "..###..###......."]   // 騰空：雙腳併攏
+];
+const DINO_ROWS = DINO_BODY.length + DINO_LEGS[0].length, DINO_COLS = DINO_BODY[0].length;
+
+function drawRunner(){
+  if(player.inv > 0 && Math.floor(game.t*14)%2===0) return;
+  const u = Math.max(1, Math.round(player.h / DINO_ROWS));     // 42 / 21 = 2 px 一格
+  const x0 = px(player.x), y0 = px(groundY + player.y) - DINO_ROWS*u;
+  // 跑越快、腳換越快（任何一個數值出問題都退回站姿，絕不讓恐龍缺腿）
+  const spd = isFinite(game.speed) ? game.speed : 300;
+  const t = isFinite(game.t) ? game.t : 0;
+  let legs = DINO_LEGS[2];
+  if(player.onGround){
+    const i = Math.floor(t * (8 + spd/60)) % 2;
+    legs = DINO_LEGS[isFinite(i) ? Math.abs(i) : 0] || DINO_LEGS[0];
+  }
+  const art = DINO_BODY.concat(legs);
+  for(let r=0;r<art.length;r++){
+    const line = art[r];
+    if(!line) continue;
+    let c = 0;
+    while(c < line.length){                    // 同色的相鄰格子併成一次繪製
+      const ch = line[c];
+      if(ch === "."){ c++; continue; }
+      let n = 1;
+      while(c+n < line.length && line[c+n] === ch) n++;
+      ctx.fillStyle = (ch === "o") ? "#ffffff" : "#535353";
+      ctx.fillRect(x0 + c*u, y0 + r*u, n*u, u);
+      c += n;
+    }
+  }
+}
+
+/* 撞到之後才讓「直接作答」出現；重新開始就收回去 */
+let deathRowOn = false;
+function showDeathRow(on){
+  on = !!on && !!CFG.allowSkip;
+  if(on === deathRowOn) return;
+  deathRowOn = on;
+  const row = $("death-row");
+  if(row) row.style.display = on ? "flex" : "none";
+}
+
+/* ================= 已收集文字 ================= */
+function collectedChars(){
+  let n=0;
+  for(let i=0;i<game.passed && i<level.groups.length;i++) n += level.groups[i].length;
+  return level.chars.slice(0,n);
+}
+function renderCollected(){
+  const hud = $("hud"), col = $("collected"), meta = $("meta");
+  showDeathRow(false);
+  col.style.display = CFG.hudCollected ? "" : "none";
+  meta.style.display = CFG.hudProgress ? "" : "none";
+  hud.style.display = (CFG.hudCollected || CFG.hudProgress) ? "" : "none";
+  if(CFG.hudCollected){
+    const got = collectedChars(), rest = level.chars.length - got.length;
+    col.innerHTML = got.join("") + '<span class="blank">' + "＿".repeat(Math.min(rest,40)) + '</span>';
+  }
+  if(CFG.hudProgress) meta.textContent = `已閃過 ${game.passed}/${level.groups.length} 組 · 失敗 ${game.deaths} 次`;
+}
+
+/* ================= 問答 ================= */
+let tries = 0;
+function normalize(s){
+  return String(s).trim().toLowerCase().replace(/\s+/g,"")
+    .replace(/[。，、．,.!！?？；;:：「」『』"'()（）\-—_~～]/g,"");
+}
+function goQuiz(){
+  tries = 0;
+  $("quiz-lead").textContent = CFG.quizLead || "";
+  $("quiz-question").textContent = level.text;
+  $("quiz-question").style.display = CFG.quizShowQuestion ? "" : "none";
+  $("in-guess").value=""; $("verdict").textContent=""; $("verdict").className="verdict";
+  show("quiz");
+  setTimeout(()=>$("in-guess").focus(),120);
+}
+function submitAnswer(){
+  const g = $("in-guess").value;
+  if(!normalize(g)){ $("verdict").className="verdict bad"; $("verdict").textContent="先寫點什麼吧。"; return; }
+  const ok = level.answers.length===0 || level.answers.some(a=>normalize(a)===normalize(g));
+  if(ok){ sRight(); finish(g.trim()); return; }
+  sWrong();
+  tries++;
+  let msg = "不對喔，再想想。（第 "+tries+" 次）";
+  if(level.hint && tries >= CFG.hintAfter) msg += "　提示：" + level.hint;
+  if(CFG.revealAfter > 0 && tries >= CFG.revealAfter){
+    $("quiz-question").style.display = "";
+    msg += "　題目是：" + level.text;
+  }
+  $("verdict").className="verdict bad"; $("verdict").textContent=msg;
+}
+function finish(ans){
+  $("res-question").textContent = CFG.resultShowQuestion ? level.text : "";
+  $("res-question").style.display = CFG.resultShowQuestion ? "" : "none";
+  $("res-question").previousElementSibling.style.display = CFG.resultShowQuestion ? "" : "none";
+  $("res-answer").textContent = level.answers.length ? level.answers[0] : ans;
+  const note = String(CFG.finalNote||"").trim();
+  $("res-note").textContent = note;
+  $("res-note").style.display = note ? "block" : "none";
+  const secs = Math.round((Date.now()-game.startTime)/1000);
+  $("res-stats").textContent =
+    `共 ${level.groups.length} 組障礙、${level.chars.length} 個字 · 失敗 ${game.deaths} 次 · 花了 ${Math.floor(secs/60)} 分 ${secs%60} 秒`;
+  show("result");
+}
+
+/* ================= 遊戲控制 ================= */
+function beginGame(){
+  prepareLevel();
+  if(level.chars.length < 1){ alert("關卡文字是空的。"); return; }
+  game.deaths=0; game.startTime=0;
+  show("game"); startLevel();
+}
+/* 綁定按鈕：元素不存在就跳過，不會讓後面的程式整段停掉 */
+function on(id, fn){ const el = $(id); if(el) el.onclick = fn; }
+on("btn-start", beginGame);
+on("btn-again", beginGame);
+on("btn-replay", ()=>{ show("game"); startLevel(); });
+on("btn-answer", ()=>{
+  game.running = false; cancelAnimationFrame(game.raf);
+  goQuiz();
+});
+on("btn-submit", submitAnswer);
+$("in-guess").addEventListener("keydown", e=>{ if(e.key==="Enter") submitAnswer(); });
+
+/* 一次按壓只算一次輸入：按著不放不會連跳，要再跳必須放開重按 */
+let keyHeld = false, pointerHeld = false;
+const isJumpKey = e => (e.code==="Space" || e.code==="ArrowUp" || e.key===" ");
+document.addEventListener("keydown", e=>{
+  if(!isJumpKey(e)) return;
+  if(!$("scr-game").classList.contains("on")) return;
+  e.preventDefault();
+  if(e.repeat || keyHeld) return;          // 系統的按鍵重複、或還按著沒放，一律忽略
+  keyHeld = true;
+  press();
+});
+document.addEventListener("keyup", e=>{
+  if(!isJumpKey(e)) return;
+  keyHeld = false;
+  releaseJump();
+});
+window.addEventListener("blur", ()=>{ keyHeld = false; pointerHeld = false; });
+cv.addEventListener("mousedown", e=>{ e.preventDefault(); if(pointerHeld) return; pointerHeld = true; press(); });
+window.addEventListener("mouseup", ()=>{ pointerHeld = false; releaseJump(); });
+cv.addEventListener("touchstart", e=>{ e.preventDefault(); if(pointerHeld) return; pointerHeld = true; press(); },{passive:false});
+cv.addEventListener("touchend", e=>{ e.preventDefault(); pointerHeld = false; releaseJump(); },{passive:false});
+cv.addEventListener("touchcancel", ()=>{ pointerHeld = false; releaseJump(); });
+
+function applyTexts(){
+  document.title = CFG.title || "文字闖關";
+  $("title-big").textContent = CFG.title || "文字闖關";
+  $("title-sub").textContent = CFG.subtitle || "";
+}
+
+/* ================= 面板（玩家版沒有這一段的 UI） ================= */
+const panel = $("panel");
+if(panel && !BAKED){
+  const inputs = {}, marks = {};
+  let initErr = null;
+
+  SPEC.forEach(s=>{
+    const box = document.createElement("div");
+    box.className = "ctrl";
+    if(s.type==="check"){
+      box.className = "chk";
+      const cb = document.createElement("input");
+      cb.type="checkbox"; cb.id="c-"+s.k;
+      const lb = document.createElement("label");
+      lb.htmlFor = cb.id; lb.textContent = s.label; lb.style.margin="0";
+      box.appendChild(cb); box.appendChild(lb);
+      cb.checked = !!CFG[s.k];                    // 建立當下就填好，不等後面的初始化
+      cb.addEventListener("change", ()=>{ CFG[s.k] = cb.checked; onChange(s); });
+      inputs[s.k] = cb; marks[s.k] = lb;
+    }else{
+      const top = document.createElement("div"); top.className="top";
+      const nm = document.createElement("span"); nm.textContent = s.label;
+      const vl = document.createElement("span"); vl.className="val"; vl.id="v-"+s.k;
+      top.appendChild(nm); top.appendChild(vl);
+      const r = document.createElement("input");
+      r.type="range"; r.min=s.min; r.max=s.max; r.step=s.step; r.id="c-"+s.k;
+      box.appendChild(top); box.appendChild(r);
+      if(s.note){ const n=document.createElement("div"); n.className="note"; n.textContent=s.note; box.appendChild(n); }
+      r.addEventListener("input", ()=>{
+        CFG[s.k] = parseFloat(r.value);
+        setVal(s);
+        onChange(s);
+      });
+      inputs[s.k] = r; marks[s.k] = vl;
+      r.value = CFG[s.k];                         // 同上：位置與數值一起就位
+      vl.textContent = fmt(s, CFG[s.k]);
+    }
+    $("g-"+s.g).appendChild(box);
+  });
+
+  /* 任何情況都要能顯示出東西，不能因為某一個值壞掉就讓整排數字消失 */
+  function fmt(s,v){
+    const n = parseFloat(v);
+    if(!isFinite(n)) return String(DEFAULTS[s.k]) + (s.unit||"");
+    return (s.step < 1 ? n.toFixed(2) : n) + (s.unit||"");
+  }
+  function setVal(s){
+    const m = marks[s.k];
+    if(m && s.type !== "check") m.textContent = fmt(s, CFG[s.k]);
+  }
+
+  document.querySelectorAll("[data-cfg]").forEach(el=>{
+    const k = el.getAttribute("data-cfg");
+    el.value = CFG[k] || "";                   // 一樣，當下就填好
+    el.addEventListener("input", ()=>{
+      CFG[k] = el.value;
+      applyTexts(); save();
+      if(k==="question" || k==="answers" || k==="hint"){
+        prepareLevel();                      // 答案／提示改了要立刻生效，不必重開一輪
+        if(k==="question"){
+          if($("scr-game").classList.contains("on")) startLevel();
+          refresh(false);
+        }
+      }
+    });
+  });
+
+  SAMPLES.forEach(s=>{
+    const b=document.createElement("button");
+    b.className="chip"; b.type="button"; b.textContent=s;
+    b.onclick=()=>{ CFG.question=s; document.querySelector('[data-cfg="question"]').value=s;
+      prepareLevel(); if($("scr-game").classList.contains("on")) startLevel(); refresh(); };
+    $("samples").appendChild(b);
+  });
+
+  let rebuildTimer = 0;
+  function onChange(s){
+    if(s.rebuild) prepareLevel();
+    save(); refresh(false);
+    if(s.rebuild && $("scr-game").classList.contains("on")){
+      clearTimeout(rebuildTimer);
+      rebuildTimer = setTimeout(()=>{ prepareLevel(); startLevel(); }, 220);
+    }
+  }
+
+  function refresh(syncInputs){
+    if(syncInputs !== false){
+      SPEC.forEach(s=>{
+        try{
+          const el = inputs[s.k];
+          if(!el) return;
+          setVal(s);
+          if(s.type==="check") el.checked = !!CFG[s.k];
+          else el.value = CFG[s.k];
+        }catch(e){}          // 單一控制項出問題，不能連累其他人
+      });
+      document.querySelectorAll("[data-cfg]").forEach(el=>{ el.value = CFG[el.getAttribute("data-cfg")] || ""; });
+    }
+    // 即時數據
+    const h = jumpHeight(), t = airTime(), cell = Math.round(CFG.cell);
+    const canStack = Math.floor((h - 6) / cell);
+    const topSpeed = Math.min(CFG.maxSpeed, CFG.startSpeed + Math.max(0, level.groups.length-1)*CFG.speedStep);
+    const jumpDist = topSpeed * t;
+    $("readout").innerHTML =
+      `跳躍高度 <b>${h.toFixed(0)} px</b>（最高可越過 <b>${canStack}</b> 層文字）<br>`+
+      `滯空時間 <b>${t.toFixed(2)} 秒</b>・最高速時一次跳 <b>${jumpDist.toFixed(0)} px</b><br>`+
+      `關卡 <b>${level.groups.length}</b> 組 / <b>${level.chars.length}</b> 字・最高速 <b>${topSpeed.toFixed(0)} px/秒</b><br>`+
+      `障礙物從進畫面到抵達 <b>${((CFG.viewW - player.x)/Math.max(1,CFG.startSpeed)).toFixed(2)}</b> 秒`+
+      `（最高速時 <b>${((CFG.viewW - player.x)/Math.max(1,topSpeed)).toFixed(2)}</b> 秒）`;
+    // 這一關實際的高度分佈
+    const obs = buildObstacles(Math.round(CFG.viewW));
+    const slots = Math.max(1, Math.round(CFG.maxStack));
+    let topHit = 0, lifted = 0, sumTop = 0;
+    obs.forEach(o=>{
+      if(o.topOff >= slots*cell) topHit++;
+      if(o.float > 0) lifted++;
+      sumTop += o.topOff;
+    });
+    const nOb = obs.length || 1;
+    let gMin=Infinity, gMax=0, jMin=Infinity, jMax=0, fullSafe=0, jumpable=0, lying=0;
+    obs.forEach((o,k)=>{
+      if(o.lie) lying++;
+      if(!o.duckable && o.gapAfter != null && k < obs.length-1){
+        jumpable++;
+        if((o.w + 34 + o.gapAfter)/o.speedAfter >= t) fullSafe++;   // 跳滿也還來得及落地
+      }
+      if(k === obs.length-1 || !o.gapAfter) return;
+      gMin=Math.min(gMin,o.gapAfter); gMax=Math.max(gMax,o.gapAfter);
+      const ju = o.gapAfter/(o.speedAfter*t);
+      jMin=Math.min(jMin,ju); jMax=Math.max(jMax,ju);
+    });
+    const sizeCount = {};
+    obs.forEach(o=>{ sizeCount[o.n] = (sizeCount[o.n]||0)+1; });
+    const sizeTxt = Object.keys(sizeCount).sort()
+      .map(k=>`${k} 字 <b>${(sizeCount[k]/nOb*100).toFixed(0)}%</b>`).join("・");
+    $("readout").innerHTML +=
+      `<br>字數分佈 ${sizeTxt}`+
+      `<br>頂到最高格 <b>${topHit}</b>/${nOb} 組（<b>${(topHit/nOb*100).toFixed(0)}%</b>）`+
+      `・離地 <b>${(lifted/nOb*100).toFixed(0)}%</b>・橫躺 <b>${(lying/nOb*100).toFixed(0)}%</b>`+
+      `・平均高度 <b>${(sumTop/nOb).toFixed(0)} px</b>`+
+      (gMax ? `<br>實際間距 <b>${gMin.toFixed(0)}–${gMax.toFixed(0)} px</b>`+
+              `（<b>${jMin.toFixed(2)}–${jMax.toFixed(2)}</b> 次跳躍）` : "")+
+      (jumpable ? `<br>「一律跳滿」還能安全的組別 <b>${(fullSafe/jumpable*100).toFixed(0)}%</b>`+
+                  (fullSafe/jumpable > 0.9 ? `（跳滿幾乎沒有代價）` : fullSafe/jumpable < 0.4 ? `（必須控制跳躍高度）` : ``) : "");
+
+    // 自動試跑：固定種子就跑這一關；全隨機就抽驗 20 種可能
+    let test = {ok:true}, tried = 1;
+    if(CFG.randomSeed){
+      tried = 20;
+      for(let n=0;n<tried;n++){
+        const r = autoTest(1 + Math.floor(Math.random()*99999));
+        if(!r.ok){ test = r; break; }
+      }
+    }else{
+      test = autoTest();
+    }
+    const warns = [];
+    if(test.ok){
+      const ts = timingStats(obs);
+      const ms = ts.ms;
+      const col = ms==null ? "#535353" : (ms < 100 ? "#8f3d2b" : (ms < 180 ? "#8a6d1f" : "#4a7a4a"));
+      $("readout").innerHTML += `<br><span style="color:#4a7a4a">自動試跑：<b>可以通關 ✓</b>`+
+        (CFG.randomSeed ? `（連抽 ${tried} 種排列都過）` : ``)+`</span>`+
+        (ms==null ? `` : `<br>最緊的起跳窗口 <b style="color:${col}">${ms} 毫秒</b>（第 ${ts.at} 組）`+
+          (ms < 100 ? `　很硬` : ms < 180 ? `　有難度` : `　寬鬆`));
+    }else{
+      warns.push("自動試跑失敗 — " + test.why + "。");
+    }
+    if(CFG.invincible) warns.push("目前是無敵模式，記得關掉再匯出。");
+    if(initErr) warns.push(initErr);
+    $("warn").className = warns.length ? "on" : "";
+    $("warn").innerHTML = warns.join("<br>");
+  }
+
+  /* ---- 匯出 ---- */
+  function exportHTML(){
+    const clone = document.documentElement.cloneNode(true);
+    const p = clone.querySelector("#panel"); if(p) p.remove();
+    const st = clone.querySelector("#stage"); if(st) st.innerHTML = PRISTINE_STAGE;
+    clone.querySelector("body").classList.add("baked");
+    const t = clone.querySelector("title"); if(t) t.textContent = CFG.title || "文字闖關";
+    const cfgScript = clone.ownerDocument.createElement("script");
+    cfgScript.textContent = "window.__BAKED__=" + JSON.stringify(CFG) + ";";
+    const main = clone.querySelector("body > script");
+    main.parentNode.insertBefore(cfgScript, main);
+    const html = "<!DOCTYPE html>\n" + clone.outerHTML;
+    const blob = new Blob([html], {type:"text/html;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = (CFG.title || "文字闖關") + ".html";
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  /* 按鈕綁定包在 try 裡：任何一顆對不上都不該讓後面的初始化整段不跑 */
+  try{
+  $("btn-export").onclick = exportHTML;
+
+  $("btn-copy-cfg").onclick = function(){
+    const s = JSON.stringify(CFG, null, 2);
+    const done=()=>{ const o=this.textContent; this.textContent="已複製 ✓"; setTimeout(()=>this.textContent=o,1400); };
+    if(navigator.clipboard && location.protocol!=="file:") navigator.clipboard.writeText(s).then(done, ()=>prompt("設定 JSON：", s));
+    else{
+      const ta=document.createElement("textarea"); ta.value=s; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand("copy"); done(); }catch(e){ prompt("設定 JSON：", s); }
+      ta.remove();
+    }
+  };
+  $("btn-paste-cfg").onclick = ()=>{
+    const s = prompt("貼上設定 JSON：");
+    if(!s) return;
+    try{ CFG = sanitize(Object.assign({}, DEFAULTS, JSON.parse(s))); }
+    catch(e){ alert("看起來不是有效的 JSON。"); return; }
+    prepareLevel(); applyTexts(); refresh(); save();
+    if($("scr-game").classList.contains("on")) startLevel();
+  };
+  $("btn-test-sfx").onclick = ()=>{
+    sJump();
+    [0,1,2,3].forEach(i=> setTimeout(()=>sPass(i), 260 + i*150));
+    setTimeout(sHurt, 950);
+    setTimeout(sDie, 1250);
+    setTimeout(sClear, 1900);
+    setTimeout(sRight, 2600);
+  };
+  $("btn-reroll").onclick = ()=>{
+    CFG.seed = 1 + Math.floor(Math.random()*999);
+    prepareLevel(); refresh(); save();
+    if($("scr-game").classList.contains("on")) startLevel();
+  };
+  $("btn-reset").onclick = ()=>{
+    if(!confirm("所有參數回到預設值？")) return;
+    CFG = sanitize(Object.assign({}, DEFAULTS));
+    prepareLevel(); applyTexts(); refresh(); save();
+    if($("scr-game").classList.contains("on")) startLevel();
+  };
+  }catch(e){ initError(e); }
+
+  function initError(e){
+    initErr = "面板初始化時發生錯誤：" + (e && e.message ? e.message : e);
+    try{ $("warn").className = "on"; $("warn").textContent = initErr; }catch(_){}
+  }
+
+  onLevelRebuilt = ()=>refresh(false);
+  try{
+    prepareLevel(); applyTexts(); refresh();
+  }catch(e){ initError(e); }
+}else{
+  /* 玩家版：只有遊戲 */
+  prepareLevel(); applyTexts();
+}
+
+resize();
+})();
+</script>
+
+
+</body></html>
